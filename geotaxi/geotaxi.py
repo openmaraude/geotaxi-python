@@ -253,6 +253,8 @@ def run_server(host, port, geotaxi):
     except KeyboardInterrupt:
         pass
     finally:
+        geotaxi.redis.close()
+        loop.run_until_complete(geotaxi.redis.wait_closed())
         transport.close()
         loop.close()
 
