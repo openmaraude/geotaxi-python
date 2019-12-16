@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import signal
 import socket
 import time
 import urllib
@@ -12,7 +13,6 @@ from aiofluent import FluentSender
 import aioredis
 import jsonschema
 import requests
-
 
 
 logger = logging.getLogger(__name__)
@@ -240,6 +240,10 @@ class GeoTaxiUDPServer:
         self.asyncio_loop.create_task(task)
 
 
+async def shutdown_server(loop, geotaxi):
+    loop.stop()
+
+
 def run_server(host, port, geotaxi):
     loop = asyncio.get_event_loop()
 
@@ -248,15 +252,14 @@ def run_server(host, port, geotaxi):
     )
     transport, _ = loop.run_until_complete(listen)
 
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        geotaxi.redis.close()
-        loop.run_until_complete(geotaxi.redis.wait_closed())
-        transport.close()
-        loop.close()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(
+            sig,
+            lambda: asyncio.ensure_future(shutdown_server(loop, geotaxi))
+        )
+
+    # Return if SIGINT or SIGTERM is caught above.
+    loop.run_forever()
 
 
 def main():
