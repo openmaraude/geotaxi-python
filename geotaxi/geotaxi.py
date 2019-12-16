@@ -121,8 +121,10 @@ class GeoTaxi:
         if not data:
             return
 
-        await self.send_fluent(data)
-        await self.update_redis(data, from_addr)
+        await asyncio.gather(
+            self.send_fluent(data),
+            self.update_redis(data, from_addr)
+        )
 
 
 class GeoTaxiServer:
