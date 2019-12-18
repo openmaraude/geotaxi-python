@@ -153,7 +153,8 @@ class GeoTaxi:
         # HSET taxi:<id>
         self.run_redis_action(
             'HSET',
-            'taxi:%s' % data['taxi'], data['operator'],
+            'taxi:%s' % data['taxi'],
+            data['operator'],
             '%s %s %s %s %s %s' % (data['timestamp'], data['lat'], data['lon'], data['status'],
                                    data['device'], data['version'])
         )

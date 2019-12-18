@@ -12,6 +12,12 @@ DEPENDENCIES = [
     'requests',
 ]
 
+TEST_DEPENDENCIES = [
+    'pytest',
+    'requests-mock',
+    'fakeredis',
+]
+
 
 def get_pkgvar(name):
     """Get the value of :param name: from __init__.py.
@@ -55,5 +61,9 @@ setup(
         ],
     },
     packages=find_packages(),
-    install_requires=DEPENDENCIES
+    install_requires=DEPENDENCIES,
+    setup_requires=[
+        'pytest-runner'
+    ],
+    tests_require=TEST_DEPENDENCIES
 )
