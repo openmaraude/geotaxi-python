@@ -32,6 +32,15 @@ To get the current queue size, send signal `SIGUSR1`:
 $> kill -s SIGUSR1 <pid>
 ```
 
+# Development
+
+To run unittests, install and run tox:
+
+```
+$> pip3 install tox
+$> tox
+```
+
 # FAQ
 
 **Why rewrite geotaxi?**
