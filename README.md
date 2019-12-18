@@ -58,3 +58,11 @@ optional arguments:
   --operator OPERATOR  Operator name. Must be the owner of --api-key if
                        authentication is enabled.
 ```
+
+**How can I know if geotaxi drops packets?**
+
+Install `netstat` (with `apt-get install net-tools`) and run [./scripts/netstat.py](scripts/netstat.py). From another shell, generate some traffic, then press enter in the first shell.
+
+The script reads netstat counters before and after you press enter, and displays the differences between these counters. Packets are lost if any of the counters `packet receive errors`, `packets to unknown port received` or `receive buffer errors` increase.
+
+Note packets can be received by geotaxi but dropped because the receive queue is full. In this case, geotaxi displays a warning message.
