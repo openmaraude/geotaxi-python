@@ -1,16 +1,16 @@
 import argparse
-import asyncio
 import hashlib
 import json
 import logging
+import multiprocessing
 import os
-import signal
+import queue
 import socket
 import time
 import urllib
 
-from aiofluent import FluentSender
-import aioredis
+from fluent.sender import FluentSender
+from redis import Redis
 import jsonschema
 import requests
 
@@ -39,10 +39,8 @@ API_MESSAGE = {
 
 class GeoTaxi:
     """GeoTaxi logic."""
-    def __init__(self, redis_host, redis_port, fluent=None,
-                 auth_enabled=False, api_url=None, api_key=None):
-        self.redis_host = redis_host
-        self.redis_port = redis_port
+    def __init__(self, redis, fluent=None, auth_enabled=False, api_url=None, api_key=None):
+        self.redis = redis
         self.fluent = fluent
 
         self.auth_enabled = auth_enabled
@@ -50,8 +48,6 @@ class GeoTaxi:
             self.api_url = api_url
             self.api_key = api_key
             self.users = self.get_api_users()
-
-        self.redis = None
 
     def get_api_users(self):
         """Retrieve {user_name: api_key} from APITaxi /users endpoint."""
@@ -70,7 +66,7 @@ class GeoTaxi:
             for row in resp.json()['data']
         }
 
-    async def check_hash(self, data, from_addr):
+    def check_hash(self, data, from_addr):
         """If auth is enabled, make sure data has a valid hash."""
         if not self.auth_enabled:
             return True
@@ -95,20 +91,20 @@ class GeoTaxi:
         if valid_hash == data['hash']:
             return True
 
-        await self.run_redis_action(
+        self.run_redis_action(
             'ZINCRBY',
             'badhash_operators',
             1,
             data['operator']
         )
-        await self.run_redis_action(
+        self.run_redis_action(
             'ZINCRBY',
             'badhash_taxis_ids',
             1,
             data['taxi']
         )
         from_ip = from_addr[0]
-        await self.run_redis_action(
+        self.run_redis_action(
             'ZINCRBY',
             'badhash_ips',
             1,
@@ -130,49 +126,38 @@ class GeoTaxi:
             return None
         return data
 
-    async def send_fluent(self, data):
+    def send_fluent(self, data):
         """Send message to fluentd."""
         if not self.fluent:
             return
-        await self.fluent.emit('geotaxi', data)
+        self.fluent.emit('geotaxi', data)
 
-    async def run_redis_action(self, action, *params):
-        # Connect to redis
-        if not self.redis:
-            connstr = 'redis://%s:%s' % (self.redis_host, self.redis_port)
-
-            try:
-                self.redis = await aioredis.create_redis_pool(connstr)
-            except socket.error as exc:
-                logger.error('Unable to connect to redis: %s', exc)
-                return
-
+    def run_redis_action(self, action, *args, **kwargs):
         action = getattr(self.redis, action.lower())
-
         # Run action
         try:
-            await action(*params)
+            action(*args, **kwargs)
         except socket.error:
             logger.error(
-                'Error while running redis action %s %s',
+                'Error while running redis action %s %s %s',
                 action.__name__.upper(),
-                ''.join([str(param) for param in params])
+                ''.join([str(arg) for arg in args]),
+                ' '.join(['%s=%s' % (key, value) for key, value in kwargs.items()])
             )
-            return
 
-    async def update_redis(self, data, from_addr):
+    def update_redis(self, data, from_addr):
         now = int(time.time())
         from_ip = from_addr[0]
 
         # HSET taxi:<id>
-        await self.run_redis_action(
+        self.run_redis_action(
             'HSET',
             'taxi:%s' % data['taxi'], data['operator'],
             '%s %s %s %s %s %s' % (data['timestamp'], data['lat'], data['lon'], data['status'],
                                    data['device'], data['version'])
         )
         # GEOADD geoindex
-        await self.run_redis_action(
+        self.run_redis_action(
             'GEOADD',
             'geoindex',
             data['lon'],
@@ -180,7 +165,7 @@ class GeoTaxi:
             data['taxi']
         )
         # GEOADD geoindex_2
-        await self.run_redis_action(
+        self.run_redis_action(
             'GEOADD',
             'geoindex_2',
             data['lon'],
@@ -188,78 +173,56 @@ class GeoTaxi:
             '%s:%s' % (data['taxi'], data['operator'])
         )
         # ZADD timestamps
-        await self.run_redis_action(
+        self.run_redis_action(
             'ZADD',
             'timestamps',
-            now,
-            '%s:%s' % (data['taxi'], data['operator'])
+            {'%s:%s' % (data['taxi'], data['operator']): now}
         )
         # ZADD timestamps_id
-        await self.run_redis_action(
+        self.run_redis_action(
             'ZADD',
             'timestamps_id',
-            now,
-            data['taxi']
+            {data['taxi']: now}
         )
         # SADD ips:<operator>
-        await self.run_redis_action(
+        self.run_redis_action(
             'SADD',
             'ips:%s' % data['operator'],
             from_ip
         )
 
-    async def handle_message(self, message, from_addr):
-        data = self.parse_message(message, from_addr)
-        if not data:
-            return
+    def handle_messages(self, msg_queue):
+        while True:
+            message, from_addr = msg_queue.get()
 
-        valid = await self.check_hash(data, from_addr)
-        if not valid:
-            return
+            data = self.parse_message(message, from_addr)
+            if not data:
+                continue
 
-        await asyncio.gather(
-            self.send_fluent(data),
+            if not self.check_hash(data, from_addr):
+                continue
+
+            self.send_fluent(data)
             self.update_redis(data, from_addr)
-        )
-
-
-class GeoTaxiUDPServer:
-    def __init__(self, asyncio_loop, geotaxi):
-        self.geotaxi = geotaxi
-        self.asyncio_loop = asyncio_loop
-        self.transport = None
-
-    def connection_made(self, transport):
-        self.transport = transport
-
-    def datagram_received(self, data, addr):
-        message = data.decode()
-        logger.debug('Received from %s: %s', addr, message)
-
-        task = self.geotaxi.handle_message(data, addr)
-        self.asyncio_loop.create_task(task)
-
-
-async def shutdown_server(loop, geotaxi):
-    loop.stop()
 
 
 def run_server(host, port, geotaxi):
-    loop = asyncio.get_event_loop()
+    msg_queue = multiprocessing.Queue(2 ** 16)
+    proc = multiprocessing.Process(target=geotaxi.handle_messages, args=(msg_queue,))
+    proc.start()
 
-    listen = loop.create_datagram_endpoint(
-        lambda: GeoTaxiUDPServer(loop, geotaxi), local_addr=(host, port)
-    )
-    transport, _ = loop.run_until_complete(listen)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((host, port))
 
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(
-            sig,
-            lambda: asyncio.ensure_future(shutdown_server(loop, geotaxi))
-        )
+    while True:
+        data, addr = sock.recvfrom(4096)
+        logger.debug('Received from %s: %s', addr, data)
 
-    # Return if SIGINT or SIGTERM is caught above.
-    loop.run_forever()
+        try:
+            # Put in the queue, but do not block
+            msg_queue.put((data, addr), False)
+        except queue.Full:
+            logger.warning('Queue is full - drop message...')
 
 
 def main():
@@ -314,10 +277,12 @@ def main():
     if args.disable_fluent:
         fluent = None
     else:
-        fluent = FluentSender(host=args.fluent_host, port=args.fluent_port)
+        fluent = FluentSender('geotaxi', host=args.fluent_host, port=args.fluent_port)
+
+    redis = Redis(host=args.redis_host, port=args.redis_port)
 
     geotaxi = GeoTaxi(
-        args.redis_host, args.redis_port,
+        redis,
         fluent=fluent,
         auth_enabled=args.auth_enabled, api_url=args.api_url, api_key=api_key
     )

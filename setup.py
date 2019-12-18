@@ -6,9 +6,9 @@ import re
 PACKAGE = 'geotaxi'
 
 DEPENDENCIES = [
+    'fluent-logger',
     'jsonschema',
-    'aiofluent-python',
-    'aioredis',
+    'redis',
     'requests',
 ]
 
