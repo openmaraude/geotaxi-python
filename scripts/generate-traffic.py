@@ -8,7 +8,7 @@ import time
 import uuid
 
 
-def run(host, port, num, api_key, operator):
+def run(host, port, num, sleep, api_key, operator):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     taxi_id = str(uuid.uuid4())
@@ -52,6 +52,9 @@ def run(host, port, num, api_key, operator):
             (host, port)
         )
 
+        if sleep > 0:
+            time.sleep(sleep)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -69,6 +72,10 @@ def main():
         help='Number of messages to send'
     )
     parser.add_argument(
+        '-s', '--sleep', type=float, default=0.001,
+        help='Time to sleep between two messages'
+    )
+    parser.add_argument(
         '--api-key', type=str,
         help='API key, to set if server has authentication enabled'
     )
@@ -78,7 +85,7 @@ def main():
     )
 
     args = parser.parse_args()
-    run(args.host, args.port, args.num, args.api_key, args.operator)
+    run(args.host, args.port, args.num, args.sleep, args.api_key, args.operator)
 
 
 if __name__ == '__main__':

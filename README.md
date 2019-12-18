@@ -60,20 +60,22 @@ Yes. `geotaxi` (C version) sends messages to fluentd through a UDP socket. The P
 Use [scripts/generate-traffic.py](scripts/generate-traffic.py).
 
 ```
-usage: generate-traffic.py [-h] [--host HOST] [--port PORT]
+usage: generate-traffic.py [-h] [--host HOST] [--port PORT] [-s SLEEP]
                            [--api-key API_KEY] [--operator OPERATOR]
                            [num]
 
 positional arguments:
-  num                  Number of messages to send
+  num                   Number of messages to send
 
 optional arguments:
-  -h, --help           show this help message and exit
-  --host HOST          geotaxi host
-  --port PORT          geotaxi port
-  --api-key API_KEY    API key, to set if server has authentication enabled
-  --operator OPERATOR  Operator name. Must be the owner of --api-key if
-                       authentication is enabled.
+  -h, --help            show this help message and exit
+  --host HOST           geotaxi host
+  --port PORT           geotaxi port
+  -s SLEEP, --sleep SLEEP
+                        Time to sleep between two messages
+  --api-key API_KEY     API key, to set if server has authentication enabled
+  --operator OPERATOR   Operator name. Must be the owner of --api-key if
+                        authentication is enabled.
 ```
 
 **How can I know if geotaxi drops packets?**
