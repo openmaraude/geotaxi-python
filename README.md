@@ -1,6 +1,6 @@
 # geotaxi-python
 
-`geotaxi-python` is the python rewrite of `geotaxi`, a high performance UDP server which receives the real-time position of taxis and store them into redis. It can handle the positions of thousands of taxis simultaneously.
+`geotaxi-python` is the python rewrite of [`geotaxi`](https://github.com/openmaraude/geotaxi), a high performance UDP server which receives the real-time position of taxis and store them into redis. It can handle the positions of thousands of taxis simultaneously.
 
 # Usage
 
@@ -36,11 +36,11 @@ $> kill -s SIGUSR1 <pid>
 
 **Why rewrite geotaxi?**
 
-geotaxi was originally written in C for performances reasons, but the code became really difficult to maintain. Huge refactoring were needed, and it wa faster to rewrite in Python, which provides good enough performances for our needs.
+geotaxi was originally written in C for performances reasons, but the code became really difficult to maintain. Huge refactoring was needed, and it wa faster to rewrite in Python, which provides good enough performances for our needs.
 
 **Is there any functional difference between geotaxi and geotaxi-python?**
 
-Yes. Geotaxi sends messages to fluentd through a UDP socket. The Python library we use to send fluentd messages only supports TCP (see the [Github issue](https://github.com/fluent/fluent-logger-python/issues/75)). Fluentd must be configured to accept TCP, like:
+Yes. `geotaxi` (C version) sends messages to fluentd through a UDP socket. The Python library we use to send fluentd messages only supports TCP (see the [Github issue](https://github.com/fluent/fluent-logger-python/issues/75), so `geotaxi-python` requires to setup Fluentd to accept TCP, like:
 
 ```
 <source>
