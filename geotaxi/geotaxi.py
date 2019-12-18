@@ -207,7 +207,7 @@ class GeoTaxi:
 
 
 def run_server(host, port, geotaxi):
-    msg_queue = multiprocessing.Queue(2 ** 16)
+    msg_queue = multiprocessing.Queue(1024)
     proc = multiprocessing.Process(target=geotaxi.handle_messages, args=(msg_queue,))
     proc.start()
 
