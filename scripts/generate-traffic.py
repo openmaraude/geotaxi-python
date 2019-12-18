@@ -57,7 +57,9 @@ def run(host, port, num, sleep, api_key, operator):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument(
         '--host', type=str, default='127.0.0.1',
@@ -73,7 +75,7 @@ def main():
     )
     parser.add_argument(
         '-s', '--sleep', type=float, default=0.001,
-        help='Time to sleep between two messages'
+        help='Time to sleep between two messages in seconds'
     )
     parser.add_argument(
         '--api-key', type=str,
