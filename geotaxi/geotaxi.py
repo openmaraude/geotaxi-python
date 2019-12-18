@@ -5,6 +5,7 @@ import logging
 import multiprocessing
 import os
 import queue
+import signal
 import socket
 import time
 import urllib
@@ -192,18 +193,26 @@ class GeoTaxi:
         )
 
     def handle_messages(self, msg_queue):
-        while True:
-            message, from_addr = msg_queue.get()
+        try:
+            while True:
+                message, from_addr = msg_queue.get()
 
-            data = self.parse_message(message, from_addr)
-            if not data:
-                continue
+                data = self.parse_message(message, from_addr)
+                if not data:
+                    continue
 
-            if not self.check_hash(data, from_addr):
-                continue
+                if not self.check_hash(data, from_addr):
+                    continue
 
-            self.send_fluent(data)
-            self.update_redis(data, from_addr)
+                self.send_fluent(data)
+                self.update_redis(data, from_addr)
+        # Raised when parent calls os.kill()
+        except KeyboardInterrupt:
+            return
+
+
+def signal_handler(signals, signum):
+    signals.append(signum)
 
 
 def run_server(host, port, geotaxi):
@@ -213,9 +222,27 @@ def run_server(host, port, geotaxi):
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((host, port))
+    sock.settimeout(0.5)
+
+    # Catch Ctrl^C, SIGTERM and SIGUSR1
+    signals = []
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGUSR1):
+        signal.signal(sig, lambda signum, _: signal_handler(signals, signum))
 
     while True:
-        data, addr = sock.recvfrom(4096)
+        if signal.SIGINT in signals or signal.SIGTERM in signals:
+            os.kill(proc.pid, signal.SIGKILL)
+            break
+
+        if signal.SIGUSR1 in signals:
+            signals.remove(signal.SIGUSR1)
+            print('Queue size: %s' % msg_queue.qsize())
+
+        try:
+            data, addr = sock.recvfrom(4096)
+        except socket.timeout:
+            continue
+
         logger.debug('Received from %s: %s', addr, data)
 
         try:
