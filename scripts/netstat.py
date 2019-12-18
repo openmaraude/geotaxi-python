@@ -53,7 +53,6 @@ def display_counters_diff(old, new):
             )
 
 
-
 def main():
     parser = argparse.ArgumentParser()
     # No args, but at least we have -h
@@ -70,6 +69,7 @@ def main():
 
     print('=== differences ===')
     display_counters_diff(orig_counters, new_counters)
+
 
 if __name__ == '__main__':
     main()
