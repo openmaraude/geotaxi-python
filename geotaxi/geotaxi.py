@@ -132,17 +132,17 @@ class GeoTaxi:
             return
         self.fluent.emit('geotaxi', data)
 
-    def run_redis_action(self, action, *args, **kwargs):
+    def run_redis_action(self, action, *params):
         action = getattr(self.redis, action.lower())
+
         # Run action
         try:
-            action(*args, **kwargs)
+            action(*params)
         except socket.error:
             logger.error(
-                'Error while running redis action %s %s %s',
+                'Error while running redis action %s %s',
                 action.__name__.upper(),
-                ''.join([str(arg) for arg in args]),
-                ' '.join(['%s=%s' % (key, value) for key, value in kwargs.items()])
+                ' '.join([str(param) for param in params])
             )
 
     def update_redis(self, data, from_addr):
