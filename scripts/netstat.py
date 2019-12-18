@@ -69,6 +69,7 @@ def main():
 
     print('=== differences ===')
     display_counters_diff(orig_counters, new_counters)
+    print('===================')
 
 
 if __name__ == '__main__':
