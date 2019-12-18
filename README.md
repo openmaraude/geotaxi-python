@@ -37,3 +37,24 @@ $> kill -s SIGUSR1 <pid>
 **Why rewrite geotaxi?**
 
 geotaxi was originally written in C for performances reasons, but the code became really difficult to maintain. Huge refactoring were needed, and it wa faster to rewrite in Python, which provides good enough performances for our needs.
+
+**How can I generate fake traffic to test geotaxi?**
+
+Use [scripts/generate-traffic.py](scripts/generate-traffic.py).
+
+```
+usage: generate-traffic.py [-h] [--host HOST] [--port PORT]
+                           [--api-key API_KEY] [--operator OPERATOR]
+                           [num]
+
+positional arguments:
+  num                  Number of messages to send
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --host HOST          geotaxi host
+  --port PORT          geotaxi port
+  --api-key API_KEY    API key, to set if server has authentication enabled
+  --operator OPERATOR  Operator name. Must be the owner of --api-key if
+                       authentication is enabled.
+```
