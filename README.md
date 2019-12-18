@@ -38,6 +38,23 @@ $> kill -s SIGUSR1 <pid>
 
 geotaxi was originally written in C for performances reasons, but the code became really difficult to maintain. Huge refactoring were needed, and it wa faster to rewrite in Python, which provides good enough performances for our needs.
 
+**Is there any functional difference between geotaxi and geotaxi-python?**
+
+Yes. Geotaxi sends messages to fluentd through a UDP socket. The Python library we use to send fluentd messages only supports TCP (see the [Github issue](https://github.com/fluent/fluent-logger-python/issues/75)). Fluentd must be configured to accept TCP, like:
+
+```
+<source>
+  @type forward
+  port 24224
+  tag geotaxi
+  format json
+</source>
+
+<match geotaxi>
+  @type stdout
+</match>
+```
+
 **How can I generate fake traffic to test geotaxi?**
 
 Use [scripts/generate-traffic.py](scripts/generate-traffic.py).
