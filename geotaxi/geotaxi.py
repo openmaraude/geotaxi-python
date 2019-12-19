@@ -313,7 +313,7 @@ def main():
     if args.disable_fluent:
         fluent = None
     else:
-        fluent = FluentSender('geotaxi', host=args.fluent_host, port=args.fluent_port)
+        fluent = FluentSender('geotaxi', host=args.fluent_host, port=int(args.fluent_port))
 
     redis = Redis(host=args.redis_host, port=args.redis_port)
 
