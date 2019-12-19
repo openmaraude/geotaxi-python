@@ -106,12 +106,12 @@ class TestGeoTaxi:
         fromaddr = ('127.0.2.3', 8909)
 
         # Bad json
-        assert geotaxi.parse_message('{badjson', fromaddr) is None
+        assert geotaxi.parse_message(b'{badjson', fromaddr) is None
         # Empty dict
-        assert geotaxi.parse_message('{}', fromaddr) is None
+        assert geotaxi.parse_message(b'{}', fromaddr) is None
 
         # Missing field "hash"
-        assert geotaxi.parse_message('''{
+        assert geotaxi.parse_message(b'''{
             "timestamp": "1",
             "operator": "user1",
             "taxi": "taxi",
@@ -123,7 +123,7 @@ class TestGeoTaxi:
         }''', fromaddr) is None
 
         # Valid
-        assert isinstance(geotaxi.parse_message('''{
+        assert isinstance(geotaxi.parse_message(b'''{
             "timestamp": "1",
             "operator": "user1",
             "taxi": "taxi",
