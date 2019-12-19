@@ -23,10 +23,10 @@ API_MESSAGE = {
     'type': 'object',
     'properties': {
         'operator':  {'type': 'string'},
-        'lat':       {'type': 'string'},
+        'lat':       {'type':  ['number', 'string']},
         'device':    {'type': 'string'},
-        'lon':       {'type': 'string'},
-        'timestamp': {'type': 'string'},
+        'lon':       {'type': ['number', 'string']},
+        'timestamp': {'type': ['number', 'string']},
         'status':    {'type': 'string'},
         'version':   {'type': 'string'},
         'taxi':      {'type': 'string'},
@@ -77,17 +77,19 @@ class GeoTaxi:
             logger.warning('User %s not valid', data['operator'])
             return False
 
-        valid_hash = hashlib.sha1(''.join([
-            data['timestamp'],
-            data['operator'],
-            data['taxi'],
-            data['lat'],
-            data['lon'],
-            data['device'],
-            data['status'],
-            data['version'],
-            user_key
-        ]).encode('utf8')).hexdigest()
+        valid_hash = hashlib.sha1(''.join(
+            map(str,
+                [
+                data['timestamp'],
+                data['operator'],
+                data['taxi'],
+                data['lat'],
+                data['lon'],
+                data['device'],
+                data['status'],
+                data['version'],
+                user_key
+        ])).encode('utf8')).hexdigest()
 
         if valid_hash == data['hash']:
             return True
