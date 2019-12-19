@@ -118,7 +118,7 @@ class GeoTaxi:
     def parse_message(self, b_message, from_addr):
         try:
             message = b_message.decode('utf-8')
-        except UnidecodeError:
+        except UnicodeDecodeError:
             logger.warning('Invalid UTF-8 message received from %s:%s', *from_addr)
             return None
 
