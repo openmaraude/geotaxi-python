@@ -107,6 +107,10 @@ class TestGeoTaxi:
 
         # Bad json
         assert geotaxi.parse_message(b'{badjson', fromaddr) is None
+
+        # Invalid UTF8
+        assert geotaxi.parse_message(b'\xff', fromaddr) is None
+
         # Empty dict
         assert geotaxi.parse_message(b'{}', fromaddr) is None
 
