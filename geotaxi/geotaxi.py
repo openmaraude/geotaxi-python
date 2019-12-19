@@ -290,7 +290,7 @@ def main():
                         help='If set, do not send logs to fluent')
     parser.add_argument('--fluent-host', type=str, default='127.0.0.1',
                         help='Fluentd host')
-    parser.add_argument('--fluent-port', type=str, default=24224,
+    parser.add_argument('--fluent-port', type=int, default=24224,
                         help='Fluentd port')
 
     parser.add_argument('--auth-enabled', action='store_true', default=False,
@@ -313,7 +313,7 @@ def main():
     if args.disable_fluent:
         fluent = None
     else:
-        fluent = FluentSender('geotaxi', host=args.fluent_host, port=int(args.fluent_port))
+        fluent = FluentSender('geotaxi', host=args.fluent_host, port=args.fluent_port)
 
     redis = Redis(host=args.redis_host, port=args.redis_port)
 
