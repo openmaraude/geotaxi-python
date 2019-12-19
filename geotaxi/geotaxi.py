@@ -210,6 +210,8 @@ class GeoTaxi:
                 if not data:
                     continue
 
+                logger.debug('Received from %s:%s: %s', *from_addr, data)
+
                 if not self.check_hash(data, from_addr):
                     continue
 
@@ -251,8 +253,6 @@ def run_server(host, port, geotaxi):
             data, addr = sock.recvfrom(4096)
         except socket.timeout:
             continue
-
-        logger.debug('Received from %s: %s', addr, data)
 
         try:
             # Put in the queue, but do not block
