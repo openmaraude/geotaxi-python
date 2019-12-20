@@ -55,11 +55,9 @@ Yes. `geotaxi` (C version) sends messages to fluentd through a UDP socket. The P
 <source>
   @type forward
   port 24224
-  tag geotaxi
-  format json
 </source>
 
-<match geotaxi>
+<match geotaxi.position>
   @type stdout
 </match>
 ```
