@@ -122,7 +122,7 @@ class GeoTaxi:
         """Send message to fluentd."""
         if not self.fluent:
             return
-        self.fluent.emit('geotaxi', data)
+        self.fluent.emit('position', data)
 
     def run_redis_action(self, action, *params):
         action = getattr(self.redis, action.lower())

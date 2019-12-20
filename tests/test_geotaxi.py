@@ -143,7 +143,7 @@ class TestGeoTaxi:
         fluent = MockFluent()
         geotaxi = GeoTaxi(None, fluent=fluent)
         geotaxi.send_fluent({'key': 'value'})
-        assert fluent._records == [('geotaxi', {'key': 'value'})]
+        assert fluent._records == [('position', {'key': 'value'})]
 
     def test_update_redis(self):
         redis = fakeredis.FakeRedis()
