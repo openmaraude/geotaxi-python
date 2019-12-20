@@ -1,6 +1,6 @@
 import argparse
 import hashlib
-import json
+import ujson as json
 import logging
 import multiprocessing
 import os
@@ -12,14 +12,14 @@ import urllib
 
 from fluent.sender import FluentSender
 from redis import Redis
-import jsonschema
+import fastjsonschema as jsonschema
 import requests
 
 
 logger = logging.getLogger(__name__)
 
 
-API_MESSAGE = {
+API_VALIDATOR = jsonschema.compile({
     'type': 'object',
     'properties': {
         'operator':  {'type': 'string'},
@@ -35,7 +35,7 @@ API_MESSAGE = {
     'required': [
         'operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash',
     ]
-}
+})
 
 
 class GeoTaxi:
@@ -124,13 +124,13 @@ class GeoTaxi:
 
         try:
             data = json.loads(message)
-        except json.decoder.JSONDecodeError:
+        except ValueError:
             logger.warning('Badly formatted JSON received from %s:%s: %s', *from_addr, message)
             return None
 
         try:
-            jsonschema.validate(instance=data, schema=API_MESSAGE)
-        except jsonschema.ValidationError as exc:
+            API_VALIDATOR(data)
+        except jsonschema.JsonSchemaException as exc:
             logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
             return None
         return data

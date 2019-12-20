@@ -7,9 +7,10 @@ PACKAGE = 'geotaxi'
 
 DEPENDENCIES = [
     'fluent-logger',
-    'jsonschema',
+    'fastjsonschema',
     'redis',
     'requests',
+    'ujson',
 ]
 
 TEST_DEPENDENCIES = [
