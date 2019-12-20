@@ -57,7 +57,7 @@ class GeoTaxi:
 
         user_key = self.users.get(data['operator'])
         if not user_key:
-            logger.warning('User %s not valid', data['operator'])
+            logger.warning('[%s] User %s not valid', os.getpid(), data['operator'])
             return False
 
         valid_hash = hashlib.sha1(''.join(
@@ -102,19 +102,19 @@ class GeoTaxi:
         try:
             message = b_message.decode('utf-8')
         except UnicodeDecodeError:
-            logger.warning('Invalid UTF-8 message received from %s:%s', *from_addr)
+            logger.warning('[%s] Invalid UTF-8 message received from %s:%s', os.getpid(), *from_addr)
             return None
 
         try:
             data = json.loads(message)
         except ValueError:
-            logger.warning('Badly formatted JSON received from %s:%s: %s', *from_addr, message)
+            logger.warning('[%s] Badly formatted JSON received from %s:%s: %s', os.getpid(), *from_addr, message)
             return None
 
         try:
             jsonschema.validate(data)
         except jsonschema.JsonSchemaException as exc:
-            logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
+            logger.warning('[%s] Invalid request received from %s:%s: %s', os.getpid(), *from_addr, exc.message)
             return None
         return data
 
@@ -132,7 +132,8 @@ class GeoTaxi:
             action(*params)
         except socket.error:
             logger.error(
-                'Error while running redis action %s %s',
+                '[%s] Error while running redis action %s %s',
+                os.getpid(),
                 action.__name__.upper(),
                 ' '.join([str(param) for param in params])
             )
@@ -193,7 +194,7 @@ class GeoTaxi:
                 if not data:
                     continue
 
-                logger.debug('Received from %s:%s: %s', *from_addr, data)
+                logger.debug('[%s] Received from %s:%s: %s', os.getpid(), *from_addr, data)
 
                 if not self.check_hash(data, from_addr):
                     continue
@@ -209,10 +210,15 @@ def signal_handler(signals, signum):
     signals.append(signum)
 
 
-def run_server(host, port, geotaxi):
+def run_server(workers, host, port, geotaxi):
     msg_queue = multiprocessing.Queue(1024)
-    proc = multiprocessing.Process(target=geotaxi.handle_messages, args=(msg_queue,))
-    proc.start()
+
+    procs = [
+        multiprocessing.Process(target=geotaxi.handle_messages, args=(msg_queue,))
+        for _ in range(workers)
+    ]
+    for proc in procs:
+        proc.start()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((host, port))
@@ -225,7 +231,8 @@ def run_server(host, port, geotaxi):
 
     while True:
         if signal.SIGINT in signals or signal.SIGTERM in signals:
-            os.kill(proc.pid, signal.SIGKILL)
+            for proc in procs:
+                os.kill(proc.pid, signal.SIGKILL)
             break
 
         if signal.SIGUSR1 in signals:
@@ -263,6 +270,10 @@ def main():
                         help='Listen host')
     parser.add_argument('-p', '--port', type=int, default=8080,
                         help='Listen port')
+
+    parser.add_argument('-w', '--workers', type=int,
+                        default=max(1, multiprocessing.cpu_count() - 1),
+                        help='Number of workers')
 
     parser.add_argument('--redis-host', type=str, default='127.0.0.1',
                         help='Redis host')
@@ -306,4 +317,4 @@ def main():
         auth_enabled=args.auth_enabled, api_url=args.api_url, api_key=api_key
     )
 
-    run_server(args.host, args.port, geotaxi)
+    run_server(args.workers, args.host, args.port, geotaxi)
