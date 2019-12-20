@@ -10,32 +10,15 @@ import socket
 import time
 import urllib
 
+from geotaxi import jsonschema
+
 from fluent.sender import FluentSender
 from redis import Redis
-import fastjsonschema as jsonschema
 import requests
 
 
 logger = logging.getLogger(__name__)
 
-
-API_VALIDATOR = jsonschema.compile({
-    'type': 'object',
-    'properties': {
-        'operator':  {'type': 'string'},
-        'lat':       {'type':  ['number', 'string']},
-        'device':    {'type': 'string'},
-        'lon':       {'type': ['number', 'string']},
-        'timestamp': {'type': ['number', 'string']},
-        'status':    {'type': 'string'},
-        'version':   {'type': 'string'},
-        'taxi':      {'type': 'string'},
-        'hash':      {'type': 'string'},
-    },
-    'required': [
-        'operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash',
-    ]
-})
 
 
 class GeoTaxi:
@@ -129,7 +112,7 @@ class GeoTaxi:
             return None
 
         try:
-            API_VALIDATOR(data)
+            jsonschema.validate(data)
         except jsonschema.JsonSchemaException as exc:
             logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
             return None
