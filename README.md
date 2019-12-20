@@ -34,12 +34,19 @@ $> kill -s SIGUSR1 <pid>
 
 # Development
 
+## Run unit tests
+
 To run unittests, install and run tox:
 
 ```
 $> pip3 install tox
 $> tox
 ```
+
+## Change jsonschema
+
+If you want to change the jsonschema of a message, you can do so by editing the variable API_SCHEMA in geotaxi/jsonschema_definition and the run `geotaxi-generate-jsonschema`. It will generate geotaxi/jsonschema.py for you.
+**Never edit geotaxi/jsonschema.py by hand.**
 
 # FAQ
 
