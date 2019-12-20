@@ -59,6 +59,7 @@ setup(
     entry_points={
         'console_scripts': [
             'geotaxi = geotaxi.geotaxi:main',
+            'geotaxi-generate-jsonschema = geotaxi.jsonschema_definition:main'
         ],
     },
     packages=find_packages(),
