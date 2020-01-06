@@ -193,8 +193,9 @@ class GeoTaxi:
         # signal on the worker PID by mistake.
         signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
-        try:
-            while True:
+        while True:
+
+            try:
                 message, from_addr = msg_queue.get()
 
                 data = self.parse_message(message, from_addr)
@@ -208,9 +209,11 @@ class GeoTaxi:
 
                 self.send_fluent(data)
                 self.update_redis(data, from_addr)
-        # Raised when parent calls os.kill()
-        except KeyboardInterrupt:
-            return
+            # Raised when parent calls os.kill()
+            except KeyboardInterrupt:
+                return
+            except Exception as exc:
+                logger.error('Exception %s, continue execution', str(exc))
 
 
 def signal_handler(signals, signum):
