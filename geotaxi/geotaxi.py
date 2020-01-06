@@ -7,6 +7,7 @@ import os
 import queue
 import signal
 import socket
+import sys
 import time
 import urllib
 
@@ -237,7 +238,8 @@ def run_server(workers, host, port, geotaxi):
 
         if signal.SIGUSR1 in signals:
             signals.remove(signal.SIGUSR1)
-            print('Queue size: %s' % msg_queue.qsize())
+            sys.stdout.write('Queue size: %s\n' % msg_queue.qsize())
+            sys.stdout.flush()
 
         try:
             data, addr = sock.recvfrom(4096)
