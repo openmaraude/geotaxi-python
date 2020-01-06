@@ -100,6 +100,11 @@ class GeoTaxi:
         )
         return False
 
+    @staticmethod
+    def validate_convert_coordinates(data):
+        data['lon'], data['lat'] = float(data['lon']), float(data['lat'])
+        return -90 <= data['lat'] <= 90 and -180 <= data['lon'] <= 180
+
     def parse_message(self, b_message, from_addr):
         try:
             message = b_message.decode('utf-8')
@@ -117,6 +122,13 @@ class GeoTaxi:
             jsonschema.validate(data)
         except jsonschema.JsonSchemaException as exc:
             logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
+            return None
+
+        if not self.validate_convert_coordinates(data):
+            logger.warning('Invalid coordinates: %s %s from %s',
+                data['lon'],
+                data['lat'],
+                data['operator'])
             return None
         return data
 
