@@ -239,8 +239,8 @@ class GeoTaxi:
                     continue
 
                 self.send_fluent(data)
-                pipe = self.pipeline()
-                self.update_redis(data, from_addr)
+                pipe = self.redis.pipeline()
+                self.update_redis(pipe, data, from_addr)
                 pipe.execute()
             # Raised when parent calls os.kill()
             except KeyboardInterrupt:
