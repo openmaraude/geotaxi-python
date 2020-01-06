@@ -186,6 +186,8 @@ class GeoTaxi:
         )
 
     def handle_messages(self, msg_queue):
+        logger.info('Worker started!')
+
         # SIGUSR1 can be sent on the master process to display the queue size.
         # Let's ignore the signal on workers in case the administrator sent the
         # signal on the worker PID by mistake.
