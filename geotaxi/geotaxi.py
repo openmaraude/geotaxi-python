@@ -194,7 +194,6 @@ class GeoTaxi:
         signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
         while True:
-
             try:
                 message, from_addr = msg_queue.get()
 
