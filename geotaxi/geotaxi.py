@@ -15,6 +15,7 @@ from geotaxi import jsonschema
 
 from fluent.sender import FluentSender
 from redis import Redis
+from redis.exceptions import RedisError
 import requests
 
 
@@ -78,13 +79,17 @@ class GeoTaxi:
         if valid_hash == data['hash']:
             return True
 
+        pipe = self.redis.pipeline()
+
         self.run_redis_action(
+            pipe,
             'ZINCRBY',
             'badhash_operators',
             1,
             data['operator']
         )
         self.run_redis_action(
+            pipe,
             'ZINCRBY',
             'badhash_taxis_ids',
             1,
@@ -92,12 +97,19 @@ class GeoTaxi:
         )
         from_ip = from_addr[0]
         self.run_redis_action(
+            pipe,
             'ZINCRBY',
             'badhash_ips',
             1,
             from_ip
         )
+        pipe.execute()
         return False
+
+    @staticmethod
+    def validate_convert_coordinates(data):
+        data['lon'], data['lat'] = float(data['lon']), float(data['lat'])
+        return -90 <= data['lat'] <= 90 and -180 <= data['lon'] <= 180
 
     def parse_message(self, b_message, from_addr):
         try:
@@ -117,6 +129,13 @@ class GeoTaxi:
         except jsonschema.JsonSchemaException as exc:
             logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
             return None
+
+        if not self.validate_convert_coordinates(data):
+            logger.warning('Invalid coordinates: %s %s from %s',
+                data['lon'],
+                data['lat'],
+                data['operator'])
+            return None
         return data
 
     def send_fluent(self, data):
@@ -125,8 +144,8 @@ class GeoTaxi:
             return
         self.fluent.emit('position', data)
 
-    def run_redis_action(self, action, *params):
-        action = getattr(self.redis, action.lower())
+    def run_redis_action(self, pipe, action, *params):
+        action = getattr(pipe, action.lower())
 
         # Run action
         try:
@@ -137,13 +156,21 @@ class GeoTaxi:
                 action.__name__.upper(),
                 ' '.join([str(param) for param in params])
             )
+        except redis.RedisError as e:
+            logger.error(
+                'Error while running redis action %s %s %s',
+                action.__name__.upper(),
+                ' '.join([str(param) for param in params]),
+                e
+            )
 
-    def update_redis(self, data, from_addr):
+    def update_redis(self, pipe, data, from_addr):
         now = int(time.time())
         from_ip = from_addr[0]
 
         # HSET taxi:<id>
         self.run_redis_action(
+            pipe,
             'HSET',
             'taxi:%s' % data['taxi'],
             data['operator'],
@@ -152,6 +179,7 @@ class GeoTaxi:
         )
         # GEOADD geoindex
         self.run_redis_action(
+            pipe,
             'GEOADD',
             'geoindex',
             data['lon'],
@@ -160,6 +188,7 @@ class GeoTaxi:
         )
         # GEOADD geoindex_2
         self.run_redis_action(
+            pipe,
             'GEOADD',
             'geoindex_2',
             data['lon'],
@@ -168,18 +197,21 @@ class GeoTaxi:
         )
         # ZADD timestamps
         self.run_redis_action(
+            pipe,
             'ZADD',
             'timestamps',
             {'%s:%s' % (data['taxi'], data['operator']): now}
         )
         # ZADD timestamps_id
         self.run_redis_action(
+            pipe,
             'ZADD',
             'timestamps_id',
             {data['taxi']: now}
         )
         # SADD ips:<operator>
         self.run_redis_action(
+            pipe,
             'SADD',
             'ips:%s' % data['operator'],
             from_ip
@@ -207,7 +239,9 @@ class GeoTaxi:
                     continue
 
                 self.send_fluent(data)
+                pipe = self.pipeline()
                 self.update_redis(data, from_addr)
+                pipe.execute()
             # Raised when parent calls os.kill()
             except KeyboardInterrupt:
                 return

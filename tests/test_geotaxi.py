@@ -166,7 +166,7 @@ class TestGeoTaxi:
         redis.geoadd = mock.MagicMock()
 
         # Try to update redis.
-        geotaxi.update_redis(payload, fromaddr)
+        geotaxi.update_redis(redis, payload, fromaddr)
 
         # GEOADD should have been called twice
         assert redis.geoadd.call_count == 2
