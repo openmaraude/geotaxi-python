@@ -15,6 +15,7 @@ from geotaxi import jsonschema
 
 from fluent.sender import FluentSender
 from redis import Redis
+from redis.exceptions import RedisError
 import requests
 
 
@@ -136,6 +137,13 @@ class GeoTaxi:
                 'Error while running redis action %s %s',
                 action.__name__.upper(),
                 ' '.join([str(param) for param in params])
+            )
+        except redis.RedisError as e:
+            logger.error(
+                'Error while running redis action %s %s %s',
+                action.__name__.upper(),
+                ' '.join([str(param) for param in params]),
+                e
             )
 
     def update_redis(self, data, from_addr):
