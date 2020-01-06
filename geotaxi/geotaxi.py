@@ -1,7 +1,7 @@
 import argparse
 import hashlib
 import ujson as json
-import logging
+import logging, logging.config
 import multiprocessing
 import os
 import queue
@@ -58,7 +58,7 @@ class GeoTaxi:
 
         user_key = self.users.get(data['operator'])
         if not user_key:
-            logger.warning('[%s] User %s not valid', os.getpid(), data['operator'])
+            logger.warning('User %s not valid', data['operator'])
             return False
 
         valid_hash = hashlib.sha1(''.join(
@@ -103,19 +103,19 @@ class GeoTaxi:
         try:
             message = b_message.decode('utf-8')
         except UnicodeDecodeError:
-            logger.warning('[%s] Invalid UTF-8 message received from %s:%s', os.getpid(), *from_addr)
+            logger.warning('Invalid UTF-8 message received from %s:%s', *from_addr)
             return None
 
         try:
             data = json.loads(message)
         except ValueError:
-            logger.warning('[%s] Badly formatted JSON received from %s:%s: %s', os.getpid(), *from_addr, message)
+            logger.warning('Badly formatted JSON received from %s:%s: %s', *from_addr, message)
             return None
 
         try:
             jsonschema.validate(data)
         except jsonschema.JsonSchemaException as exc:
-            logger.warning('[%s] Invalid request received from %s:%s: %s', os.getpid(), *from_addr, exc.message)
+            logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
             return None
         return data
 
@@ -133,8 +133,7 @@ class GeoTaxi:
             action(*params)
         except socket.error:
             logger.error(
-                '[%s] Error while running redis action %s %s',
-                os.getpid(),
+                'Error while running redis action %s %s',
                 action.__name__.upper(),
                 ' '.join([str(param) for param in params])
             )
@@ -200,7 +199,7 @@ class GeoTaxi:
                 if not data:
                     continue
 
-                logger.debug('[%s] Received from %s:%s: %s', os.getpid(), *from_addr, data)
+                logger.debug('Received from %s:%s: %s', *from_addr, data)
 
                 if not self.check_hash(data, from_addr):
                     continue
@@ -258,6 +257,12 @@ def run_server(workers, host, port, geotaxi):
             logger.warning('Queue is full - drop message...')
 
 
+class FormatWithPID(logging.Formatter):
+    def format(self, record):
+        record.pid = os.getpid()
+        return super(FormatWithPID, self).format(record)
+
+
 def main():
     parser = argparse.ArgumentParser(
         add_help=False,
@@ -302,7 +307,30 @@ def main():
     args = parser.parse_args()
 
     loglevel = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(level=loglevel)
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': False,
+
+        'formatters': {
+            'default': {
+                '()': FormatWithPID,
+                'format': '%(asctime)s (pid %(pid)s) %(message)s'
+            }
+        },
+        'handlers': {
+            'console': {
+               'level': loglevel,
+               'class': 'logging.StreamHandler',
+               'formatter': 'default',
+            }
+        },
+        'loggers': {
+            '': {
+                'handlers': ['console'],
+                'level': loglevel,
+            }
+        }
+    })
 
     if not args.auth_enabled:
         logger.warning('Authentication is not enabled')
