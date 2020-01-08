@@ -6,7 +6,7 @@ import pytest
 import requests
 import requests_mock
 
-from geotaxi.geotaxi import GeoTaxi
+from geotaxi.worker import Worker
 
 
 class MockFluent:
@@ -18,14 +18,14 @@ class MockFluent:
         self._records.append((tag, data))
 
 
-class TestGeoTaxi:
+class TestWorker:
 
     def test_geotaxi_error_5xx(self):
         with requests_mock.mock() as mock:
             mock.get('http://api.tests/users', status_code=500)
 
             with pytest.raises(requests.exceptions.HTTPError):
-                geotaxi = GeoTaxi(
+                worker = Worker(
                     None,
                     auth_enabled=True,
                     api_url='http://api.tests',
@@ -41,13 +41,13 @@ class TestGeoTaxi:
                 ]
             })
 
-            geotaxi = GeoTaxi(
+            worker = Worker(
                 None,
                 auth_enabled=True,
                 api_url='http://api.tests',
                 api_key='f4k3'
             )
-            users = geotaxi.get_api_users()
+            users = worker.get_api_users()
             assert len(users) == 2
             assert 'user1' in users and users['user1'] == 'key1'
             assert 'user2' in users and users['user2'] == 'key2'
@@ -60,13 +60,13 @@ class TestGeoTaxi:
                 ]
             })
             redis = fakeredis.FakeStrictRedis()
-            geotaxi = GeoTaxi(
+            worker = Worker(
                 redis,
                 auth_enabled=True,
                 api_url='http://api.tests',
                 api_key='f4k3'
             )
-            is_valid = geotaxi.check_hash({
+            is_valid = worker.check_hash({
                 'timestamp': '1',
                 'operator': 'user1',
                 'taxi': 'taxi',
@@ -79,7 +79,7 @@ class TestGeoTaxi:
             }, ('127.0.2.3', 9999))
             assert is_valid is True
 
-            is_valid = geotaxi.check_hash({
+            is_valid = worker.check_hash({
                 'timestamp': '1',
                 'operator': 'user1',
                 'taxi': 'taxi',
@@ -102,20 +102,20 @@ class TestGeoTaxi:
             assert redis.zrange(b'badhash_ips', 0, -1, withscores=True) == [(b'127.0.2.3', 1.0)]
 
     def test_parse_message(self):
-        geotaxi = GeoTaxi(None)
+        worker = Worker(None)
         fromaddr = ('127.0.2.3', 8909)
 
         # Bad json
-        assert geotaxi.parse_message(b'{badjson', fromaddr) is None
+        assert worker.parse_message(b'{badjson', fromaddr) is None
 
         # Invalid UTF8
-        assert geotaxi.parse_message(b'\xff', fromaddr) is None
+        assert worker.parse_message(b'\xff', fromaddr) is None
 
         # Empty dict
-        assert geotaxi.parse_message(b'{}', fromaddr) is None
+        assert worker.parse_message(b'{}', fromaddr) is None
 
         # Missing field "hash"
-        assert geotaxi.parse_message(b'''{
+        assert worker.parse_message(b'''{
             "timestamp": "1",
             "operator": "user1",
             "taxi": "taxi",
@@ -127,7 +127,7 @@ class TestGeoTaxi:
         }''', fromaddr) is None
 
         # Valid
-        assert isinstance(geotaxi.parse_message(b'''{
+        assert isinstance(worker.parse_message(b'''{
             "timestamp": "1",
             "operator": "user1",
             "taxi": "taxi",
@@ -141,13 +141,13 @@ class TestGeoTaxi:
 
     def test_send_fluent(self):
         fluent = MockFluent()
-        geotaxi = GeoTaxi(None, fluent=fluent)
-        geotaxi.send_fluent({'key': 'value'})
+        worker = Worker(None, fluent=fluent)
+        worker.send_fluent({'key': 'value'})
         assert fluent._records == [('position', {'key': 'value'})]
 
     def test_update_redis(self):
         redis = fakeredis.FakeRedis()
-        geotaxi = GeoTaxi(redis)
+        worker = Worker(redis)
 
         payload = {
             'timestamp': '1',
@@ -166,7 +166,7 @@ class TestGeoTaxi:
         redis.geoadd = mock.MagicMock()
 
         # Try to update redis.
-        geotaxi.update_redis(redis, payload, fromaddr)
+        worker.update_redis(redis, payload, fromaddr)
 
         # GEOADD should have been called twice
         assert redis.geoadd.call_count == 2
