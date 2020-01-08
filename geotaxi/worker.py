@@ -104,7 +104,7 @@ class Worker:
         try:
             message = b_message.decode('utf-8')
         except UnicodeDecodeError:
-            logger.warning('Invalid UTF-8 message received from %s:%s', *from_addr)
+            logger.warning('Invalid UTF-8 message received from %s:%s data: %s', *from_addr, b_message)
             return None
 
         try:
@@ -116,7 +116,10 @@ class Worker:
         try:
             jsonschema.validate(data)
         except jsonschema.JsonSchemaException as exc:
-            logger.warning('Invalid request received from %s:%s: %s', *from_addr, exc.message)
+            logger.warning('Invalid request received from %s:%s: %s, data: %s',
+             *from_addr,
+             exc.message,
+             data)
             return None
 
         if not self.validate_convert_coordinates(data):
