@@ -9,12 +9,12 @@ NoneType = type(None)
 
 def validate(data):
     if not isinstance(data, (dict)):
-        raise JsonSchemaException("data must be object", value=data, name="data", definition={'type': 'object', 'properties': {'operator': {'type': 'string'}, 'lat': {'type': ['number', 'string']}, 'device': {'type': 'string'}, 'lon': {'type': ['number', 'string']}, 'timestamp': {'type': ['number', 'string']}, 'status': {'type': 'string'}, 'version': {'type': 'string'}, 'taxi': {'type': 'string'}, 'hash': {'type': 'string'}}, 'required': ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash']}, rule='type')
+        raise JsonSchemaException("data must be object", value=data, name="data", definition={'type': 'object', 'properties': {'operator': {'type': 'string'}, 'lat': {'type': ['number', 'string']}, 'device': {'type': 'string'}, 'lon': {'type': ['number', 'string']}, 'timestamp': {'type': ['number', 'string']}, 'status': {'type': 'string'}, 'version': {'type': ['number', 'string']}, 'taxi': {'type': 'string'}, 'hash': {'type': 'string'}}, 'required': ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash']}, rule='type')
     data_is_dict = isinstance(data, dict)
     if data_is_dict:
         data_len = len(data)
         if not all(prop in data for prop in ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash']):
-            raise JsonSchemaException("data must contain ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash'] properties", value=data, name="data", definition={'type': 'object', 'properties': {'operator': {'type': 'string'}, 'lat': {'type': ['number', 'string']}, 'device': {'type': 'string'}, 'lon': {'type': ['number', 'string']}, 'timestamp': {'type': ['number', 'string']}, 'status': {'type': 'string'}, 'version': {'type': 'string'}, 'taxi': {'type': 'string'}, 'hash': {'type': 'string'}}, 'required': ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash']}, rule='required')
+            raise JsonSchemaException("data must contain ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash'] properties", value=data, name="data", definition={'type': 'object', 'properties': {'operator': {'type': 'string'}, 'lat': {'type': ['number', 'string']}, 'device': {'type': 'string'}, 'lon': {'type': ['number', 'string']}, 'timestamp': {'type': ['number', 'string']}, 'status': {'type': 'string'}, 'version': {'type': ['number', 'string']}, 'taxi': {'type': 'string'}, 'hash': {'type': 'string'}}, 'required': ['operator', 'lat', 'device', 'lon', 'timestamp', 'status', 'version', 'taxi', 'hash']}, rule='required')
         data_keys = set(data.keys())
         if "operator" in data_keys:
             data_keys.remove("operator")
@@ -49,8 +49,8 @@ def validate(data):
         if "version" in data_keys:
             data_keys.remove("version")
             data__version = data["version"]
-            if not isinstance(data__version, (str)):
-                raise JsonSchemaException("data.version must be string", value=data__version, name="data.version", definition={'type': 'string'}, rule='type')
+            if not isinstance(data__version, (int, float, str)) or isinstance(data__version, bool):
+                raise JsonSchemaException("data.version must be number or string", value=data__version, name="data.version", definition={'type': ['number', 'string']}, rule='type')
         if "taxi" in data_keys:
             data_keys.remove("taxi")
             data__taxi = data["taxi"]

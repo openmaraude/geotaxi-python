@@ -12,7 +12,7 @@ API_SCHEMA = {
         'lon':       {'type': ['number', 'string']},
         'timestamp': {'type': ['number', 'string']},
         'status':    {'type': 'string'},
-        'version':   {'type': 'string'},
+        'version':   {'type': ['number', 'string']},
         'taxi':      {'type': 'string'},
         'hash':      {'type': 'string'},
     },
