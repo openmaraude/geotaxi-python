@@ -1,5 +1,6 @@
 import argparse
-import logging, logging.config
+import logging
+import logging.config
 import multiprocessing
 import os
 import queue
@@ -12,6 +13,7 @@ from redis import Redis
 from geotaxi.worker import Worker
 
 logger = logging.getLogger("geotaxi")
+
 
 def signal_handler(signals, signum):
     signals.append(signum)
