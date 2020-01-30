@@ -148,7 +148,7 @@ class Worker:
                 action.__name__.upper(),
                 ' '.join([str(param) for param in params])
             )
-        except redis.RedisError as e:
+        except RedisError as e:
             logger.error(
                 'Error while running redis action %s %s %s',
                 action.__name__.upper(),
