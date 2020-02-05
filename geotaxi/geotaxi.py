@@ -95,6 +95,8 @@ def main():
                         help='Redis host')
     parser.add_argument('--redis-port', type=str, default=6379,
                         help='Redis port')
+    parser.add_argument('--redis-password', type=str, default=None,
+                        help='Redis password')
 
     parser.add_argument('--disable-fluent', action='store_true', default=False,
                         help='If set, do not send logs to fluent')
@@ -148,7 +150,10 @@ def main():
     else:
         fluent = FluentSender('geotaxi', host=args.fluent_host, port=args.fluent_port)
 
-    redis = Redis(host=args.redis_host, port=args.redis_port)
+    if args.redis_password:
+        redis = Redis(host=args.redis_host, port=args.redis_port, password=args.redis_password)
+    else:
+        redis = Redis(host=args.redis_host, port=args.redis_port)
 
     worker = Worker(
         redis,
