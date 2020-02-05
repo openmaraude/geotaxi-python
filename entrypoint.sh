@@ -9,6 +9,7 @@ for value_env in \
     WORKERS \
     REDIS_HOST \
     REDIS_PORT \
+    REDIS_PASSWORD \
     FLUENT_HOST \
     FLUENT_PORT \
     API_URL;
