@@ -150,10 +150,7 @@ def main():
     else:
         fluent = FluentSender('geotaxi', host=args.fluent_host, port=args.fluent_port)
 
-    if args.redis_password:
-        redis = Redis(host=args.redis_host, port=args.redis_port, password=args.redis_password)
-    else:
-        redis = Redis(host=args.redis_host, port=args.redis_port)
+    redis = Redis(host=args.redis_host, port=args.redis_port, password=args.redis_password)
 
     worker = Worker(
         redis,
