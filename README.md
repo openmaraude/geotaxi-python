@@ -1,6 +1,6 @@
 # geotaxi-python
 
-`geotaxi-python` is the python rewrite of [`geotaxi`](https://github.com/openmaraude/geotaxi), a high performance UDP server which receives the real-time position of taxis and store them into redis. It can handle the positions of thousands of taxis simultaneously.
+`geotaxi-python` is a high performance UDP server which receives the real-time position of taxis and store them into redis. It can handle the positions of thousands of taxis simultaneously.
 
 # Usage
 
@@ -33,6 +33,8 @@ $> kill -s SIGUSR1 <pid>
 ```
 
 # Development
+
+Use [APITaxi_devel](https://github.com/openmaraude/APITaxi_devel) to run the project locally.
 
 ## Run unit tests
 
