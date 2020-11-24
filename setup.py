@@ -11,6 +11,7 @@ DEPENDENCIES = [
     'redis',
     'requests',
     'ujson',
+    'sentry-sdk',
 ]
 
 TEST_DEPENDENCIES = [

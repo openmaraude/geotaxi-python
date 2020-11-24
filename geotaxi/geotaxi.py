@@ -7,8 +7,10 @@ import queue
 import signal
 import socket
 import sys
+
 from fluent.sender import FluentSender
 from redis import Redis
+import sentry_sdk
 
 from geotaxi.worker import Worker
 
@@ -91,6 +93,8 @@ def main():
                         default=max(1, multiprocessing.cpu_count() - 1),
                         help='Number of workers')
 
+    parser.add_argument('--sentry-dsn', type=str, help='Sentry DSN')
+
     parser.add_argument('--redis-host', type=str, default='127.0.0.1',
                         help='Redis host')
     parser.add_argument('--redis-port', type=str, default=6379,
@@ -111,6 +115,9 @@ def main():
                         help='APITaxi URL, used when authentication is enabled to retrieve users')
 
     args = parser.parse_args()
+
+    if args.sentry_dsn:
+        sentry_sdk.init(args.sentry_dsn, traces_sample_rate=1.0)
 
     loglevel = logging.DEBUG if args.verbose else logging.INFO
     logging.config.dictConfig({

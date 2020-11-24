@@ -12,7 +12,8 @@ for value_env in \
     REDIS_PASSWORD \
     FLUENT_HOST \
     FLUENT_PORT \
-    API_URL;
+    API_URL \
+    SENTRY_DSN;
 do
     value=$(eval "echo \${$value_env}")
     test "$value" == "" && continue
