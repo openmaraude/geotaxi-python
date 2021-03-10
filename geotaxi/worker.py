@@ -1,6 +1,5 @@
 import hashlib
 import ujson as json
-import time
 import urllib
 import requests
 import signal
@@ -26,16 +25,17 @@ class Worker:
             self.api_key = api_key
             self.users = self.get_api_users()
 
+    @property
+    def _api_headers(self):
+        return {
+            'X-Version': '2',
+            'X-Api-Key': self.api_key
+        }
+
     def get_api_users(self):
         """Retrieve {user_name: api_key} from APITaxi /users endpoint."""
         users_url = urllib.parse.urljoin(self.api_url, 'users')
-        resp = requests.get(
-            users_url,
-            headers={
-                'X-Version': '2',
-                'X-Api-Key': self.api_key
-            }
-        )
+        resp = requests.get(users_url, headers=self._api_headers)
         resp.raise_for_status()
 
         return {
@@ -158,58 +158,26 @@ class Worker:
                 e
             )
 
-    def update_redis(self, pipe, data, from_addr):
-        now = int(time.time())
-        from_ip = from_addr[0]
+    def send_backend(self, data):
+        """Just reroute to the API for processing and storage"""
+        geotaxi_url = urllib.parse.urljoin(self.api_url, 'geotaxi')
 
-        # HSET taxi:<id>
-        self.run_redis_action(
-            pipe,
-            'HSET',
-            'taxi:%s' % data['taxi'],
-            data['operator'],
-            '%s %s %s %s %s %s' % (data['timestamp'], data['lat'], data['lon'], data['status'],
-                                   data['device'], data['version'])
-        )
-        # GEOADD geoindex
-        self.run_redis_action(
-            pipe,
-            'GEOADD',
-            'geoindex',
-            data['lon'],
-            data['lat'],
-            data['taxi']
-        )
-        # GEOADD geoindex_2
-        self.run_redis_action(
-            pipe,
-            'GEOADD',
-            'geoindex_2',
-            data['lon'],
-            data['lat'],
-            '%s:%s' % (data['taxi'], data['operator'])
-        )
-        # ZADD timestamps
-        self.run_redis_action(
-            pipe,
-            'ZADD',
-            'timestamps',
-            {'%s:%s' % (data['taxi'], data['operator']): now}
-        )
-        # ZADD timestamps_id
-        self.run_redis_action(
-            pipe,
-            'ZADD',
-            'timestamps_id',
-            {data['taxi']: now}
-        )
-        # SADD ips:<operator>
-        self.run_redis_action(
-            pipe,
-            'SADD',
-            'ips:%s' % data['operator'],
-            from_ip
-        )
+        body = {
+            'data': [
+                {
+                    'positions': [
+                        {
+                            'taxi_id': data['taxi'],
+                            'lon': float(data['lon']),
+                            'lat': float(data['lat']),
+                        }
+                    ]
+                }
+            ]
+        }
+
+        response = requests.post(geotaxi_url, json=body, headers=self._api_headers)
+        response.raise_for_status()
 
     def handle_messages(self, msg_queue):
         logger.info('Worker started!')
@@ -233,9 +201,7 @@ class Worker:
                     continue
 
                 self.send_fluent(data)
-                pipe = self.redis.pipeline()
-                self.update_redis(pipe, data, from_addr)
-                pipe.execute()
+                self.send_backend(data)
             # Raised when parent calls os.kill()
             except KeyboardInterrupt:
                 return
