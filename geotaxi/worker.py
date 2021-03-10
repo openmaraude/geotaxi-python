@@ -15,6 +15,7 @@ logger = logging.getLogger("geotaxi")
 
 class Worker:
     """GeoTaxi worker."""
+
     def __init__(self, redis, fluent=None, auth_enabled=False, api_url=None, api_key=None):
         self.redis = redis
         self.fluent = fluent
@@ -114,7 +115,7 @@ class Worker:
 
         try:
             jsonschema.validate(data)
-        except jsonschema.JsonSchemaException as exc:
+        except jsonschema.JsonSchemaValueException as exc:
             logger.warning(
                 'Invalid request received from %s:%s: %s, data: %s',
                 *from_addr,
