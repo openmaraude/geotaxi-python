@@ -97,7 +97,13 @@ class Worker:
 
     @staticmethod
     def validate_convert_coordinates(data):
-        data['lon'], data['lat'] = float(data['lon']), float(data['lat'])
+        lon, lat = str(data['lon']), str(data['lat'])
+        # Accept the French decimal format
+        lon, lat = lon.replace(',', '.'), lat.replace(',', '.')
+        try:
+            data['lon'], data['lat'] = float(lon), float(lat)
+        except ValueError:
+            return False
         return -90 <= data['lat'] <= 90 and -180 <= data['lon'] <= 180
 
     def parse_message(self, b_message, from_addr):
