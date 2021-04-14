@@ -183,3 +183,33 @@ class TestWorker:
 
         assert b'ips:%s' % payload['operator'].encode('utf8') in redis.keys()
         assert fromaddr[0].encode('utf8') in redis.smembers(b'ips:%s' % payload['operator'].encode('utf8'))
+
+    def test_validate_convert_coordinates(self):
+        worker = Worker(None)
+
+        data = {
+            'lon': 2.346303339766483,
+            'lat': 48.865546846846846,
+        }
+        assert worker.validate_convert_coordinates(data)
+        assert data == {
+            'lon': 2.346303339766483,
+            'lat': 48.865546846846846,
+        }
+
+        # French decimal format
+        data = {
+            'lon': "2,346303339766483",
+            'lat': "48,865546846846846",
+        }
+        assert worker.validate_convert_coordinates(data)
+        assert data == {
+            'lon': 2.346303339766483,
+            'lat': 48.865546846846846,
+        }
+
+        data = {
+            'lon': "2,346 303 339 766 483",
+            'lat': "48,865 546 846 846 846",
+        }
+        assert not worker.validate_convert_coordinates(data)
