@@ -1,3 +1,5 @@
+from unittest import mock
+
 import fakeredis
 import pytest
 import requests
@@ -139,37 +141,9 @@ class TestWorker:
         worker.send_fluent({'key': 'value'})
         assert fluent._records == [('position', {'key': 'value'})]
 
-    def test_send_backend(self, requests_mock):
-        def callback(request, context):
-            assert request.json() == {
-                'data': [
-                    {
-                        'positions': [
-                            {
-                                'taxi_id': 'taxi',
-                                'lon': 18.0,  # Casted to float
-                                'lat': 17.0,
-                            }
-                        ]
-                    }
-                ]
-            }
-
-            context.status_code = 200
-            return ''
-
-        requests_mock.get('http://api.tests/users', json={
-            'data': [
-                {'name': 'user1', 'apikey': 'key1'},
-            ]
-        })
-        requests_mock.post('http://api.tests/geotaxi', text=callback)
-        worker = Worker(
-            None,
-            auth_enabled=True,
-            api_url='http://api.tests',
-            api_key='key1',
-        )
+    def test_update_redis(self):
+        redis = fakeredis.FakeRedis()
+        worker = Worker(redis)
 
         payload = {
             'timestamp': '1',
@@ -182,6 +156,30 @@ class TestWorker:
             'version': '1',
             'hash': 'b4dhash'
         }
+        fromaddr = ('127.0.3.4', 9132)
 
-        # Try to send
-        worker.send_backend(payload)
+        # fakeredis doesn't implement geoadd. Fake the method.
+        redis.geoadd = mock.MagicMock()
+
+        # Try to update redis.
+        worker.update_redis(redis, payload, fromaddr)
+
+        # GEOADD should have been called twice
+        assert redis.geoadd.call_count == 2
+        redis.geoadd.assert_any_call('geoindex', '18', '17', 'taxi')
+        redis.geoadd.assert_any_call('geoindex_2', '18', '17', 'taxi:user1')
+
+        # There should be six keys stored (the two GEOADD above are not listed)
+        assert len(redis.keys()) == 4
+
+        assert b'taxi:%s' % payload['taxi'].encode('utf8') in redis.keys()
+        assert b'user1' in redis.hgetall('taxi:%s' % payload['taxi'])
+
+        assert b'timestamps' in redis.keys()
+        assert redis.zrange(b'timestamps', 0, -1) == [b'taxi:user1']
+
+        assert b'timestamps_id' in redis.keys()
+        assert redis.zrange(b'timestamps_id', 0, -1) == [b'taxi']
+
+        assert b'ips:%s' % payload['operator'].encode('utf8') in redis.keys()
+        assert fromaddr[0].encode('utf8') in redis.smembers(b'ips:%s' % payload['operator'].encode('utf8'))
