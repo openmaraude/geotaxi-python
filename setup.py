@@ -8,7 +8,7 @@ PACKAGE = 'geotaxi'
 DEPENDENCIES = [
     'fluent-logger',
     'fastjsonschema',
-    'redis',
+    'redis<4',
     'requests',
     'ujson',
     'sentry-sdk',
