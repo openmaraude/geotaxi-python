@@ -32,7 +32,7 @@ jobs:
       - run:
           name: Build docker image
           command: |
-            docker build -t openmaraude/geotaxi-python-devenv:${CIRCLE_TAG} .
+            docker build --target devenv -t openmaraude/geotaxi-python-devenv:${CIRCLE_TAG} .
             docker tag openmaraude/geotaxi-python-devenv:${CIRCLE_TAG} openmaraude/geotaxi-python-devenv:latest
 
             docker build -t openmaraude/geotaxi-python:${CIRCLE_TAG} .
