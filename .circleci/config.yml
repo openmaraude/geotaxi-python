@@ -32,12 +32,19 @@ jobs:
       - run:
           name: Build docker image
           command: |
+            docker build -t openmaraude/geotaxi-python-devenv:${CIRCLE_TAG} .
+            docker tag openmaraude/geotaxi-python-devenv:${CIRCLE_TAG} openmaraude/geotaxi-python-devenv:latest
+
             docker build -t openmaraude/geotaxi-python:${CIRCLE_TAG} .
             docker tag openmaraude/geotaxi-python:${CIRCLE_TAG} openmaraude/geotaxi-python:latest
       - run:
           name: Publish docker Image to hub.docker.com
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+            docker push openmaraude/geotaxi-python-devenv:${CIRCLE_TAG}
+            docker push openmaraude/geotaxi-python-devenv:latest
+
             docker push openmaraude/geotaxi-python:${CIRCLE_TAG}
             docker push openmaraude/geotaxi-python:latest
 
