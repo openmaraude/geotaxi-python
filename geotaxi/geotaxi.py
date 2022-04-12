@@ -157,7 +157,12 @@ def main():
     else:
         fluent = FluentSender('geotaxi', host=args.fluent_host, port=args.fluent_port)
 
-    redis = Redis(host=args.redis_host, port=args.redis_port, password=args.redis_password)
+    redis = Redis(
+        host=args.redis_host,
+        port=args.redis_port,
+        password=args.redis_password,
+        socket_keepalive=True,
+    )
 
     worker = Worker(
         redis,
