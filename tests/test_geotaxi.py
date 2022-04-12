@@ -170,7 +170,7 @@ class TestWorker:
         redis.geoadd.assert_any_call('geoindex_2', '18', '17', 'taxi:user1')
 
         # There should be six keys stored (the two GEOADD above are not listed)
-        assert len(redis.keys()) == 4
+        assert len(redis.keys()) == 3
 
         assert b'taxi:%s' % payload['taxi'].encode('utf8') in redis.keys()
         assert b'user1' in redis.hgetall('taxi:%s' % payload['taxi'])
@@ -180,9 +180,6 @@ class TestWorker:
 
         assert b'timestamps_id' in redis.keys()
         assert redis.zrange(b'timestamps_id', 0, -1) == [b'taxi']
-
-        assert b'ips:%s' % payload['operator'].encode('utf8') in redis.keys()
-        assert fromaddr[0].encode('utf8') in redis.smembers(b'ips:%s' % payload['operator'].encode('utf8'))
 
     def test_validate_convert_coordinates(self):
         worker = Worker(None)

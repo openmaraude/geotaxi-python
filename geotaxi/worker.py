@@ -166,7 +166,6 @@ class Worker:
 
     def update_redis(self, pipe, data, from_addr):
         now = int(time.time())
-        from_ip = from_addr[0]
 
         # HSET taxi:<id>
         self.run_redis_action(
@@ -208,13 +207,6 @@ class Worker:
             'ZADD',
             'timestamps_id',
             {data['taxi']: now}
-        )
-        # SADD ips:<operator>
-        self.run_redis_action(
-            pipe,
-            'SADD',
-            'ips:%s' % data['operator'],
-            from_ip
         )
 
     def handle_messages(self, msg_queue):
