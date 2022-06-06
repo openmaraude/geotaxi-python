@@ -1,6 +1,6 @@
 ##### DEV IMAGE #####
 
-FROM ubuntu AS devenv
+FROM ubuntu:20.04 AS devenv
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN=true
@@ -31,7 +31,7 @@ CMD ["geotaxi", "-h", "0.0.0.0", "-p", "8080", "--redis-host", "redis", "--fluen
 
 ##### PROD IMAGE #####
 
-FROM ubuntu
+FROM ubuntu:20.04
 
 RUN apt-get update && apt-get install -y \
   python3-pip
