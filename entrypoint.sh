@@ -13,7 +13,8 @@ for value_env in \
     FLUENT_HOST \
     FLUENT_PORT \
     API_URL \
-    SENTRY_DSN;
+    SENTRY_DSN \
+    WORKERS;
 do
     value=$(eval "echo \${$value_env}")
     test "$value" == "" && continue
