@@ -104,41 +104,4 @@ Note packets can be received by geotaxi but dropped because the receive queue is
 
 # Production
 
-The infrastructure behind api.taxi is hosted on CleverCloud, where it is unfortunately not possible to host UDP applications. As a result, geotaxi is the only component hosted on a virtual machine from Online.net.
-
-To deploy a new version of geotaxi:
-
-* run `make tag` and `git push`
-* wait until [circle-ci/config.yml](circle-ci/config.yml) publishes the Docker image [openmaraude/geotaxi-python](https://hub.docker.com/r/openmaraude/geotaxi-python)
-* connect to geotaxi.api.taxi: `ssh -l root geotaxi.api.taxi`
-* run `/root/redeploy-dev.sh` or `/root/redeploy-prod.sh`:
-
-```
-#!/bin/sh -x
-
-DOCKER_IMAGE=openmaraude/geotaxi-python:latest
-CONTAINER_NAME=geotaxi-dev
-FAILOVER_IP=x.x.x.x
-
-docker rm -f "${CONTAINER_NAME}"
-
-docker run -ti \
-	-d \
-	--pull=always \
-	--restart=unless-stopped \
-	-e HOST=0.0.0.0 \
-	-e PORT=8080 \
-	-e REDIS_HOST=xxx \
-	-e REDIS_PORT=xxx \
-	-e REDIS_PASSWORD=xxx \
-	-e API_URL=https://dev.api.taxi \
-	-e VERBOSE=1 \
-	-e SENTRY_DSN=xxxxxxxxxxxx \
-	-e WORKERS=4 \
-	-e DISABLE_FLUENT=true \
-	-p "${FAILOVER_IP}:80:8080/udp" \
-	--name "$CONTAINER_NAME" \
-	"$DOCKER_IMAGE"
-```
-
-The containers `geotaxi` and `geotaxi-dev` listen on the IP addresses behind `geoloc.api.taxi` and `geoloc.dev.api.taxi`.
+See `deployment/README.md`.

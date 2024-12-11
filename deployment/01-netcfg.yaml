@@ -1,0 +1,22 @@
+# /etc/netplan/01-netcfg.yaml 
+# This file describes the network interfaces available on your system
+# For more information, see netplan(5).
+# See https://www.scaleway.com/en/docs/dedibox-network/ip-failover/how-to/configure-debian-ubuntu/#failover-ip-configuration-on-ubuntu
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp1s0:
+      dhcp4: yes
+      addresses:
+        - <FAILOVER_IP_1>/32
+        - <FAILOVER_IP_2>/32
+      routes:
+        - to: <GATEWAY_IP>
+        - to: default
+          via: <GATEWAY_IP>
+      nameservers:
+        addresses:
+          - <DNS_1>
+          - <DNS_2>
+        search: []
