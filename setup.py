@@ -8,7 +8,7 @@ PACKAGE = 'geotaxi'
 DEPENDENCIES = [
     'fluent-logger',
     'fastjsonschema',
-    'redis<4',
+    'redis>=5.2,<5.3',
     'requests',
     'ujson',
     'sentry-sdk',
@@ -68,5 +68,7 @@ setup(
     setup_requires=[
         'pytest-runner'
     ],
-    tests_require=TEST_DEPENDENCIES
+    extras_require={
+        'tests': TEST_DEPENDENCIES,
+    },
 )
