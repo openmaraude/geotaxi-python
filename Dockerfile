@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
   sudo \
   vim
 
-RUN pip3 install virtualenv
+RUN pip3 install virtualenv tox
 
 # Create user and add in sudo
 RUN useradd geotaxi
