@@ -1,6 +1,6 @@
 ##### DEV IMAGE #####
 
-FROM ubuntu:20.04 AS devenv
+FROM ubuntu:24.04 AS devenv
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN=true
@@ -11,8 +11,6 @@ RUN apt-get update && apt-get install -y \
   python3-pip \
   sudo \
   vim
-
-RUN pip3 install virtualenv tox
 
 # Create user and add in sudo
 RUN useradd geotaxi
