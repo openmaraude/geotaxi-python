@@ -10,7 +10,7 @@ DEPENDENCIES = [
     'fastjsonschema',
     'redis>=5.2,<5.3',
     'requests',
-    'ujson',
+    'orjson >= 3.10,<4',
     'sentry-sdk',
 ]
 
