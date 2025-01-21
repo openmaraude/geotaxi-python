@@ -166,8 +166,8 @@ class TestWorker:
 
         # GEOADD should have been called twice
         assert redis.geoadd.call_count == 2
-        redis.geoadd.assert_any_call('geoindex', '18', '17', 'taxi')
-        redis.geoadd.assert_any_call('geoindex_2', '18', '17', 'taxi:user1')
+        redis.geoadd.assert_any_call('geoindex', ('18', '17', 'taxi'))
+        redis.geoadd.assert_any_call('geoindex_2', ('18', '17', 'taxi:user1'))
 
         # There should be six keys stored (the two GEOADD above are not listed)
         assert len(redis.keys()) == 3

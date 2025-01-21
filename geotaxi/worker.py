@@ -171,35 +171,38 @@ class Worker:
         self.run_redis_action(
             pipe,
             'HSET',
-            'taxi:%s' % data['taxi'],
+            f"taxi:{data['taxi']}",
             data['operator'],
-            '%s %s %s %s %s %s' % (data['timestamp'], data['lat'], data['lon'], data['status'],
-                                   data['device'], data['version'])
+            f"{data['timestamp']} {data['lat']} {data['lon']} {data['status']} {data['device']} {data['version']}"
         )
         # GEOADD geoindex
         self.run_redis_action(
             pipe,
             'GEOADD',
             'geoindex',
-            data['lon'],
-            data['lat'],
-            data['taxi']
+            (
+                data['lon'],
+                data['lat'],
+                data['taxi']
+            )
         )
         # GEOADD geoindex_2
         self.run_redis_action(
             pipe,
             'GEOADD',
             'geoindex_2',
-            data['lon'],
-            data['lat'],
-            '%s:%s' % (data['taxi'], data['operator'])
+            (
+                data['lon'],
+                data['lat'],
+                f"{data['taxi']}:{data['operator']}"
+            )
         )
         # ZADD timestamps
         self.run_redis_action(
             pipe,
             'ZADD',
             'timestamps',
-            {'%s:%s' % (data['taxi'], data['operator']): now}
+            {f"{data['taxi']}:{data['operator']}": now}
         )
         # ZADD timestamps_id
         self.run_redis_action(
