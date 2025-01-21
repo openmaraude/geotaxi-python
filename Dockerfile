@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
   sudo \
   vim
 
+RUN pip3 install virtualenv
+
 # Create user and add in sudo
 RUN useradd geotaxi
 RUN echo "geotaxi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
