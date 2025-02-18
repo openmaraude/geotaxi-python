@@ -38,11 +38,11 @@ Use [APITaxi_devel](https://github.com/openmaraude/APITaxi_devel) to run the pro
 
 ## Run unit tests
 
-To run unittests, install and run tox:
+To run unittests, install and run pytest:
 
 ```
-$> pip3 install tox
-$> tox
+$> pip3 install ".[tests]"
+$> pytest
 ```
 
 ## Change jsonschema

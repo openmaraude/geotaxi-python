@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geotaxi"
+authors = [
+  { name="Julien Castets", email="julien.castets@beta.gouv.fr" },
+  { name="Hervé Cauwelier", email="herve.cauwelier@beta.gouv.fr" },
+]
+description = "UDP server to store realtime taxi positions"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["taxi transportation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+]
+license = { file = "LICENSE" }
+dynamic = ["version"]
+
+dependencies = [
+    'fluent-logger',
+    'fastjsonschema',
+    'redis>=5.2,<5.3',
+    'requests',
+    'orjson >= 3.10,<4',
+    'sentry-sdk',
+]
+
+[project.optional-dependencies]
+tests = [
+    "pytest",
+    "requests-mock",
+    "fakeredis",
+]
+
+[project.scripts]
+geotaxi = "geotaxi.geotaxi:main"
+geotaxi-generate-jsonschema = "geotaxi.jsonschema_definition:main"
+
+
+[project.urls]
+Homepage = "https://github.com/openmaraude/geotaxi-python"
+Issues = "https://github.com/openmaraude/geotaxi-python/issues"
+
+[tool.setuptools]
+packages = ["geotaxi"]
+
+[tool.setuptools.dynamic]
+version = {attr = "geotaxi.__version__"}
