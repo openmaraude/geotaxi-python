@@ -1,26 +1,21 @@
 version: 2.1
 
+orbs:
+  python: circleci/python@3.0.0
+
 jobs:
   test:
-    docker:
-      - image: cimg/python:3.8
-
-    working_directory: ~/repo
-
+    executor: python/default
     steps:
       - checkout
-
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install tox
-
+      - python/install-packages:
+          pkg-manager: pip
+      - python/install-packages:
+          args: tox
+          pkg-manager: pip
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
             tox
 
   build:
@@ -53,7 +48,7 @@ workflows:
 
   test:
     jobs:
-      - test
+      - python/test
 
   # Build artifacts, ignore all branches, only run for all tags.
   artifacts:
