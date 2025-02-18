@@ -10,7 +10,6 @@ jobs:
     steps:
       - checkout
       - python/install-packages:
-          args: .
           pkg-manager: pip
       - python/install-packages:
           args: tox
@@ -19,7 +18,10 @@ jobs:
           name: run tests
           command: |
             tox
-
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
   build:
     docker:
       - image: circleci/buildpack-deps:stretch
