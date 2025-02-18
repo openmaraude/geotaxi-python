@@ -42,6 +42,7 @@ COPY . /app
 WORKDIR /app
 
 RUN python3 -m venv /venv
+RUN /venv/bin/pip3 install -U setuptools
 RUN /venv/bin/pip3 install .
 
 RUN useradd geotaxi
