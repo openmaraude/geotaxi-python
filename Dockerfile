@@ -32,18 +32,23 @@ CMD ["geotaxi", "-h", "0.0.0.0", "-p", "8080", "--redis-host", "redis", "--fluen
 
 ##### PROD IMAGE #####
 
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
-  python3-pip
+  python3-pip \
+  python3-venv
 
 COPY . /app
 WORKDIR /app
 
-RUN pip3 install .
+RUN python3 -m venv /venv
+RUN /venv/bin/pip3 install .
 
 RUN useradd geotaxi
 USER geotaxi
+
+ENV VIRTUAL_ENV=/venv
+ENV PATH=/venv/bin:$PATH
 
 COPY entrypoint.sh /
 CMD ["/entrypoint.sh"]
