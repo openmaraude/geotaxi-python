@@ -9,10 +9,9 @@ RUN apt-get update && apt-get install -y \
   git \
   less \
   python3-pip \
+  python3-venv \
   sudo \
   vim
-
-RUN pip3 install virtualenv
 
 # Create user and add in sudo
 RUN useradd geotaxi
