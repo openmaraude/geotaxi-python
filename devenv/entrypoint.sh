@@ -6,6 +6,7 @@ sudo -E find /venv/ -maxdepth 0 -empty -exec python3 -m venv /venv \;
 
 . /venv/bin/activate
 
+sudo -E /venv/bin/pip install tox
 sudo -E /venv/bin/pip install inotify
 sudo -E /venv/bin/pip install -e "/git/geotaxi-python"
 
